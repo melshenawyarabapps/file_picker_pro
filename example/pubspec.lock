@@ -108,11 +108,10 @@ packages:
   file_picker_pro:
     dependency: "direct main"
     description:
-      name: file_picker_pro
-      sha256: cd0ee41d49e4db2943f9bb1a6cf0de5b8f71c455c1591ff420fc4f302baabbbf
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.1.0"
+      path: ".."
+      relative: true
+    source: path
+    version: "4.0.0"
   file_selector_linux:
     dependency: transitive
     description:
@@ -597,5 +596,5 @@ packages:
     source: hosted
     version: "6.6.1"
 sdks:
-  dart: ">=3.9.0 <4.0.0"
+  dart: "3.9.2"
   flutter: ">=3.35.0"

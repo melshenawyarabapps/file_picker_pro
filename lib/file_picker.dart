@@ -28,6 +28,9 @@ class FilePicker extends StatefulWidget {
   final double? width;
   final double? height;
   final Widget? child;
+  final Widget? tapWidget;
+  final Widget? deleteWidget;
+  final GestureTapCallback? onTap;
 
   const FilePicker({
     super.key,
@@ -54,6 +57,9 @@ class FilePicker extends StatefulWidget {
     this.width,
     this.height,
     this.child,
+    this.tapWidget,
+    this.deleteWidget,
+    this.onTap,
   });
 
   @override
@@ -76,252 +82,268 @@ class _FilePickerState extends State<FilePicker> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () async {
+      onTap: widget.onTap ?? () async {
         FileData fileData = FileData.clone(widget.fileData);
         showModalBottomSheet(
           context: context,
           builder: (context) {
-            return Container(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    crossAxisAlignment: CrossAxisAlignment.end,
+            return (fileData.hasFile
+                    ? widget.deleteWidget
+                    : widget.tapWidget) ??
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.end,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Visibility(
-                            visible: (widget.view && fileData.hasFile),
-                            child: GestureDetector(
-                              onTap: () {
-                                if (widget.onView != null) {
-                                  widget.onView!(fileData);
-                                } else {
-                                  Files.viewFile(fileData: fileData);
-                                }
-                              },
-                              child: Column(
-                                children: [
-                                  _assetImage(
-                                    _imgFileSelectionView,
-                                    width: _imageSize,
-                                    height: _imageSize,
-                                  ),
-                                  SizedBox(height: _gap),
-                                  const Text("View"),
-                                ],
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: _vert),
-                          Visibility(
-                            visible: widget.camera,
-                            child: GestureDetector(
-                              onTap: () async {
-                                await Files.filePickerOptions(
-                                  context: context,
-                                  fileData: fileData,
-                                  fileMode: FileMode.camera,
-                                  crop: widget.crop,
-                                  maxFileSizeInMB: widget.maxFileSizeInMb,
-                                  cropOnlySquare: widget.cropOnlySquare,
-                                  cropperToolbarTitle:
-                                      widget.cropperToolbarTitle,
-                                  cropperToolbarColor:
-                                      widget.cropperToolbarColor,
-                                  cropperToolbarWidgetsColor:
-                                      widget.cropperToolbarWidgetsColor,
-                                  onSelected: (fileData) {
-                                    widget.onSelected(fileData);
-                                    Navigator.pop(context);
-                                    setState(() {});
-                                  },
-                                  onCancel: (message, messageCode) {
-                                    if (widget.onCancel != null) {
-                                      widget.onCancel!(message, messageCode);
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Visibility(
+                                visible: (widget.view && fileData.hasFile),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    if (widget.onView != null) {
+                                      widget.onView!(fileData);
+                                    } else {
+                                      Files.viewFile(fileData: fileData);
                                     }
                                   },
-                                );
-                              },
-                              child: Column(
-                                children: [
-                                  _assetImage(
-                                    _imgFileSelectionCamera,
-                                    width: _imageSize,
-                                    height: _imageSize,
+                                  child: Column(
+                                    children: [
+                                      _assetImage(
+                                        _imgFileSelectionView,
+                                        width: _imageSize,
+                                        height: _imageSize,
+                                      ),
+                                      SizedBox(height: _gap),
+                                      const Text("View"),
+                                    ],
                                   ),
-                                  SizedBox(height: _gap),
-                                  const Text("Camera"),
-                                ],
+                                ),
                               ),
-                            ),
+                              SizedBox(height: _vert),
+                              Visibility(
+                                visible: widget.camera,
+                                child: GestureDetector(
+                                  onTap: () async {
+                                    await Files.filePickerOptions(
+                                      context: context,
+                                      fileData: fileData,
+                                      fileMode: FileMode.camera,
+                                      crop: widget.crop,
+                                      maxFileSizeInMB: widget.maxFileSizeInMb,
+                                      cropOnlySquare: widget.cropOnlySquare,
+                                      cropperToolbarTitle:
+                                          widget.cropperToolbarTitle,
+                                      cropperToolbarColor:
+                                          widget.cropperToolbarColor,
+                                      cropperToolbarWidgetsColor:
+                                          widget.cropperToolbarWidgetsColor,
+                                      onSelected: (fileData) {
+                                        widget.onSelected(fileData);
+                                        Navigator.pop(context);
+                                        setState(() {});
+                                      },
+                                      onCancel: (message, messageCode) {
+                                        if (widget.onCancel != null) {
+                                          widget.onCancel!(
+                                            message,
+                                            messageCode,
+                                          );
+                                        }
+                                      },
+                                    );
+                                  },
+                                  child: Column(
+                                    children: [
+                                      _assetImage(
+                                        _imgFileSelectionCamera,
+                                        width: _imageSize,
+                                        height: _imageSize,
+                                      ),
+                                      SizedBox(height: _gap),
+                                      const Text("Camera"),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Visibility(
+                                visible: (widget.delete && fileData.hasFile),
+                                child: GestureDetector(
+                                  onTap: () async {
+                                    await Files.deleteFile(
+                                      fileData: fileData,
+                                      onDeleted: (fileData) {
+                                        widget.onSelected(fileData);
+                                        if (widget.onDeleted != null) {
+                                          widget.onDeleted!(fileData);
+                                        }
+                                        Navigator.pop(context);
+                                        setState(() {});
+                                      },
+                                    );
+                                  },
+                                  child: Column(
+                                    children: [
+                                      _assetImage(
+                                        _imgFileSelectionDelete,
+                                        width: _imageSize,
+                                        height: _imageSize,
+                                      ),
+                                      SizedBox(height: _gap),
+                                      const Text("Delete"),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: _vert),
+                              Visibility(
+                                visible: widget.gallery,
+                                child: GestureDetector(
+                                  onTap: () async {
+                                    await Files.filePickerOptions(
+                                      context: context,
+                                      fileData: fileData,
+                                      fileMode: FileMode.gallery,
+                                      crop: widget.crop,
+                                      maxFileSizeInMB: widget.maxFileSizeInMb,
+                                      cropOnlySquare: widget.cropOnlySquare,
+                                      cropperToolbarTitle:
+                                          widget.cropperToolbarTitle,
+                                      cropperToolbarColor:
+                                          widget.cropperToolbarColor,
+                                      cropperToolbarWidgetsColor:
+                                          widget.cropperToolbarWidgetsColor,
+                                      onSelected: (fileData) {
+                                        widget.onSelected(fileData);
+                                        Navigator.pop(context);
+                                        setState(() {});
+                                      },
+                                      onCancel: (message, messageCode) {
+                                        if (widget.onCancel != null) {
+                                          widget.onCancel!(
+                                            message,
+                                            messageCode,
+                                          );
+                                        }
+                                      },
+                                    );
+                                  },
+                                  child: Column(
+                                    children: [
+                                      _assetImage(
+                                        _imgFileSelectionGallery,
+                                        width: _imageSize,
+                                        height: _imageSize,
+                                      ),
+                                      SizedBox(height: _gap),
+                                      const Text("Gallery"),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              SizedBox(height: _vert),
+                              Visibility(
+                                visible: widget.otherDevice,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    log("onOtherDeviceSelected");
+                                    if (widget.onOtherDeviceSelected != null) {
+                                      widget.onOtherDeviceSelected!(
+                                        widget.fileData,
+                                      );
+                                    }
+                                    Navigator.pop(context);
+                                  },
+                                  child: Column(
+                                    children: [
+                                      _assetImage(
+                                        _imgFileSelectionMC,
+                                        width: _imageSize,
+                                        height: _imageSize,
+                                      ),
+                                      SizedBox(height: _gap),
+                                      const Text("Other Device"),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              SizedBox(height: _vert),
+                              Visibility(
+                                visible: widget.document,
+                                child: GestureDetector(
+                                  onTap: () async {
+                                    await Files.filePickerOptions(
+                                      context: context,
+                                      fileData: fileData,
+                                      fileMode: FileMode.file,
+                                      maxFileSizeInMB: widget.maxFileSizeInMb,
+                                      allowedExtensions:
+                                          widget.allowedExtensions,
+                                      onSelected: (fileData) {
+                                        widget.onSelected(fileData);
+                                        Navigator.pop(context);
+                                        setState(() {});
+                                      },
+                                      onCancel: (message, messageCode) {
+                                        if (widget.onCancel != null) {
+                                          widget.onCancel!(
+                                            message,
+                                            messageCode,
+                                          );
+                                        }
+                                      },
+                                    );
+                                  },
+                                  child: Column(
+                                    children: [
+                                      _assetImage(
+                                        _imgFileSelectionDocument,
+                                        width: _imageSize,
+                                        height: _imageSize,
+                                      ),
+                                      SizedBox(height: _gap),
+                                      const Text("File"),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Visibility(
-                            visible: (widget.delete && fileData.hasFile),
-                            child: GestureDetector(
-                              onTap: () async {
-                                await Files.deleteFile(
-                                  fileData: fileData,
-                                  onDeleted: (fileData) {
-                                    widget.onSelected(fileData);
-                                    if (widget.onDeleted != null) {
-                                      widget.onDeleted!(fileData);
-                                    }
-                                    Navigator.pop(context);
-                                    setState(() {});
-                                  },
-                                );
-                              },
-                              child: Column(
-                                children: [
-                                  _assetImage(
-                                    _imgFileSelectionDelete,
-                                    width: _imageSize,
-                                    height: _imageSize,
-                                  ),
-                                  SizedBox(height: _gap),
-                                  const Text("Delete"),
-                                ],
-                              ),
-                            ),
+                      SizedBox(height: _vert),
+                      Visibility(
+                        visible: (widget.maxFileSizeInMb != null),
+                        child: Text(
+                          "* File must be less than ${widget.maxFileSizeInMb} MB",
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Colors.red,
                           ),
-                          SizedBox(height: _vert),
-                          Visibility(
-                            visible: widget.gallery,
-                            child: GestureDetector(
-                              onTap: () async {
-                                await Files.filePickerOptions(
-                                  context: context,
-                                  fileData: fileData,
-                                  fileMode: FileMode.gallery,
-                                  crop: widget.crop,
-                                  maxFileSizeInMB: widget.maxFileSizeInMb,
-                                  cropOnlySquare: widget.cropOnlySquare,
-                                  cropperToolbarTitle:
-                                      widget.cropperToolbarTitle,
-                                  cropperToolbarColor:
-                                      widget.cropperToolbarColor,
-                                  cropperToolbarWidgetsColor:
-                                      widget.cropperToolbarWidgetsColor,
-                                  onSelected: (fileData) {
-                                    widget.onSelected(fileData);
-                                    Navigator.pop(context);
-                                    setState(() {});
-                                  },
-                                  onCancel: (message, messageCode) {
-                                    if (widget.onCancel != null) {
-                                      widget.onCancel!(message, messageCode);
-                                    }
-                                  },
-                                );
-                              },
-                              child: Column(
-                                children: [
-                                  _assetImage(
-                                    _imgFileSelectionGallery,
-                                    width: _imageSize,
-                                    height: _imageSize,
-                                  ),
-                                  SizedBox(height: _gap),
-                                  const Text("Gallery"),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          SizedBox(height: _vert),
-                          Visibility(
-                            visible: widget.otherDevice,
-                            child: GestureDetector(
-                              onTap: () {
-                                log("onOtherDeviceSelected");
-                                if (widget.onOtherDeviceSelected != null) {
-                                  widget.onOtherDeviceSelected!(
-                                    widget.fileData,
-                                  );
-                                }
-                                Navigator.pop(context);
-                              },
-                              child: Column(
-                                children: [
-                                  _assetImage(
-                                    _imgFileSelectionMC,
-                                    width: _imageSize,
-                                    height: _imageSize,
-                                  ),
-                                  SizedBox(height: _gap),
-                                  const Text("Other Device"),
-                                ],
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: _vert),
-                          Visibility(
-                            visible: widget.document,
-                            child: GestureDetector(
-                              onTap: () async {
-                                await Files.filePickerOptions(
-                                  context: context,
-                                  fileData: fileData,
-                                  fileMode: FileMode.file,
-                                  maxFileSizeInMB: widget.maxFileSizeInMb,
-                                  allowedExtensions: widget.allowedExtensions,
-                                  onSelected: (fileData) {
-                                    widget.onSelected(fileData);
-                                    Navigator.pop(context);
-                                    setState(() {});
-                                  },
-                                  onCancel: (message, messageCode) {
-                                    if (widget.onCancel != null) {
-                                      widget.onCancel!(message, messageCode);
-                                    }
-                                  },
-                                );
-                              },
-                              child: Column(
-                                children: [
-                                  _assetImage(
-                                    _imgFileSelectionDocument,
-                                    width: _imageSize,
-                                    height: _imageSize,
-                                  ),
-                                  SizedBox(height: _gap),
-                                  const Text("File"),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ],
                   ),
-                  SizedBox(height: _vert),
-                  Visibility(
-                    visible: (widget.maxFileSizeInMb != null),
-                    child: Text(
-                      "* File must be less than ${widget.maxFileSizeInMb} MB",
-                      style: const TextStyle(fontSize: 10, color: Colors.red),
-                    ),
-                  ),
-                ],
-              ),
-            );
+                );
           },
         );
       },
